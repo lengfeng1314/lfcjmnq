@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>冷风抽卡预算计算器 v1.0</title>
+<!--
+  ============================================================
+  冷风抽卡预算计算器 v1.0
+  Copyright (c) 2026 lengfeng
+  License: CC BY-NC-SA 4.0
+  品牌：冷风 | QQ：3693465571
+  未经作者书面同意，禁止分发、商用、二次发布。
+  本注释为代码完整性校验的一部分，删除将导致程序无法运行。
+  ============================================================
+-->
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#08080f;color:#fff;min-height:100vh;overflow-x:hidden;padding-bottom:70px}
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:#08080f}
+.bg::before{content:"";position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(255,45,120,.22) 0%,transparent 70%);top:-250px;left:-250px;animation:float1 14s ease-in-out infinite}
+.bg::after{content:"";position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(100,60,255,.18) 0%,transparent 70%);bottom:-200px;right:-200px;animation:float2 17s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(90px,70px)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-70px,-90px)}}
+.scan{position:fixed;inset:0;z-index:-1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0,transparent 3px,rgba(255,255,255,.012) 3px,rgba(255,255,255,.012) 4px);animation:scan 8s linear infinite}
+@keyframes scan{0%{transform:translateY(0)}100%{transform:translateY(4px)}}
+.particles{position:fixed;inset:0;z-index:-1;pointer-events:none}
+.particle{position:absolute;width:2px;height:2px;background:#ff4d8d;border-radius:50%;opacity:.5;animation:rise linear infinite}
+@keyframes rise{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:.7}90%{opacity:.7}100%{transform:translateY(-10vh) scale(1);opacity:0}}
+.page{display:none;min-height:100vh;padding:24px 20px;animation:fadeIn .4s}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.cover{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:30px 20px;position:relative;padding-bottom:200px}
+.cover-badge{display:inline-block;padding:8px 22px;border:1px solid rgba(255,77,141,.5);border-radius:30px;font-size:12px;letter-spacing:4px;color:#ff8db8;margin-bottom:30px;backdrop-filter:blur(10px)}
+.cover h1{font-size:48px;font-weight:900;letter-spacing:2px;line-height:1.15;background:linear-gradient(135deg,#ff2d78,#ff8db8,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px;filter:drop-shadow(0 0 30px rgba(255,45,120,.4))}
+.cover .sub{font-size:15px;color:#9a9ab0;letter-spacing:3px;margin-bottom:50px}
+.ring{width:130px;height:130px;border-radius:50%;position:relative;margin-bottom:50px;background:radial-gradient(circle,rgba(255,45,120,.2) 0%,transparent 70%)}
+.ring::before{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid rgba(255,45,120,.6);animation:pulse 2s ease-out infinite}
+.ring::after{content:"";position:absolute;inset:20px;border-radius:50%;border:1px solid rgba(255,141,184,.4);animation:pulse 2s ease-out infinite .5s}
+.ring-core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:radial-gradient(circle,#ff2d78,#a855f7);box-shadow:0 0 30px rgba(255,45,120,.8)}
+@keyframes pulse{0%{transform:scale(.8);opacity:1}100%{transform:scale(1.4);opacity:0}}
+.btn{display:block;width:100%;max-width:340px;padding:18px;margin:0 auto;border:1px solid rgba(255,77,141,.6);border-radius:16px;background:linear-gradient(135deg,rgba(255,45,120,.15),rgba(168,85,247,.15));color:#fff;font-size:18px;letter-spacing:6px;font-weight:600;backdrop-filter:blur(10px);cursor:pointer;transition:.3s;box-shadow:0 0 30px rgba(255,45,120,.15)}
+.btn:active{transform:scale(.97);box-shadow:0 0 50px rgba(255,45,120,.4)}
+.btn.small{font-size:15px;padding:14px;letter-spacing:2px;max-width:100%;margin:8px 0}
+.footer{position:fixed;bottom:0;left:0;right:0;padding:12px 20px;background:rgba(8,8,15,.92);backdrop-filter:blur(20px);border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:#8a8a9a;display:flex;justify-content:space-between;align-items:center;z-index:10;gap:8px}
+.footer .qq{color:#ff8db8}
+.footer .ver{color:#5a5a6a}
+.cover-bottom{position:absolute;bottom:20px;left:0;right:0;padding:0 20px;display:flex;justify-content:space-between;align-items:flex-end;text-align:left;font-size:11px;color:#8a8a9a;line-height:1.7}
+.cover-left{display:flex;flex-direction:column;gap:2px}
+.cover-right{display:flex;flex-direction:column;align-items:center;gap:4px}
+.cover-right img{width:80px;height:80px;border-radius:8px;border:1px solid rgba(255,77,141,.3);background:#fff;padding:3px}
+.cover .qq{color:#ff8db8}
+.cover .small{font-size:10px;color:#5a5a6a}
+.nav{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.nav-back{width:40px;height:40px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.nav h2{font-size:20px;font-weight:700}
+.card{background:linear-gradient(135deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;margin-bottom:14px;transition:.3s;cursor:pointer;backdrop-filter:blur(10px)}
+.card:active{transform:scale(.98);border-color:rgba(255,77,141,.5)}
+.card h3{font-size:17px;margin-bottom:6px}
+.card p{font-size:13px;color:#8a8a9a}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid .card{margin-bottom:0;text-align:center;padding:24px 10px}
+.grid .card .icon{font-size:32px;margin-bottom:8px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal.active{display:flex}
+.modal-box{width:100%;max-width:340px;background:linear-gradient(135deg,#15151f,#1a1a28);border:1px solid rgba(255,77,141,.3);border-radius:20px;padding:28px 24px;text-align:center}
+.modal-box h3{font-size:20px;margin-bottom:8px}
+.modal-box p{font-size:13px;color:#8a8a9a;margin-bottom:20px}
+.modal-box input{width:100%;padding:14px;border-radius:12px;font-size:16px;text-align:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;outline:none;margin-bottom:16px}
+.modal-box .err{color:#ff6b6b;font-size:13px;margin-bottom:12px;min-height:18px}
+.input-group{margin-bottom:14px}
+.input-group label{display:block;font-size:13px;color:#9a9ab0;margin-bottom:6px}
+.input-group input,.input-group select{width:100%;padding:12px 14px;border-radius:12px;font-size:15px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;outline:none;transition:.3s}
+.input-group input:focus{border-color:#ff4d8d;box-shadow:0 0 20px rgba(255,45,120,.2)}
+.info-card{background:linear-gradient(135deg,rgba(255,45,120,.1),rgba(168,85,247,.1));border:1px solid rgba(255,77,141,.25);border-radius:16px;padding:18px;margin-bottom:20px}
+.info-card .row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px}
+.info-card .row .k{color:#9a9ab0}
+.info-card .row .v{color:#fff;font-weight:600}
+.result{background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(255,45,120,.15));border:1px solid rgba(168,85,247,.3);border-radius:16px;padding:20px;margin-top:16px;animation:fadeIn .5s}
+.result .big{font-size:26px;font-weight:900;margin-bottom:6px}
+.result .line{font-size:14px;color:#c0c0d0;margin:6px 0}
+.result .win{color:#ffd700}
+.result .lose{color:#ff6b6b}
+.spinner{width:100%;max-width:300px;margin:20px auto;position:relative;height:180px;display:flex;align-items:center;justify-content:center}
+.spinner-card{width:80px;height:110px;border-radius:12px;background:linear-gradient(135deg,#2a2a3a,#1a1a28);border:2px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:32px;transition:.3s}
+.spinner-card.spin{animation:spinAnim .6s ease-in-out}
+.spinner-card.gold{border-color:#ffd700;background:linear-gradient(135deg,#ffd700,#ff8c00);box-shadow:0 0 60px rgba(255,215,0,.8)}
+.spinner-card.purple{border-color:#a855f7;background:linear-gradient(135deg,#a855f7,#6d28d9);box-shadow:0 0 40px rgba(168,85,247,.6)}
+@keyframes spinAnim{0%{transform:rotateY(0) scale(1)}50%{transform:rotateY(180deg) scale(1.2)}100%{transform:rotateY(360deg) scale(1)}}
+.warn{font-size:11px;color:#5a5a6a;text-align:center;margin:16px 0;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="scan"></div>
+<div class="particles" id="particles"></div>
+
+<!-- 封面页 -->
+<div class="page active" id="page-cover">
+  <div class="cover">
+    <div class="cover-badge">COLD WIND TOOLS</div>
+    <h1>冷风游戏<br>抽奖模拟器</h1>
+    <p class="sub">抽卡预算 · 概率模拟</p>
+    <div class="ring"><div class="ring-core"></div></div>
+    <button class="btn" onclick="openAuth()">进 入</button>
+    <div class="cover-bottom">
+      <div class="cover-left">
+        <div>客服/BUG修复：<span class="qq">QQ 3693465571</span></div>
+        <div class="small">数据仅供参考，不保证准确性</div>
+        <div class="small">v1.0</div>
+      </div>
+      <div class="cover-right">
+        <img src="wx.png" alt="赞赏码" onerror="this.style.display='none'">
+        <div class="small">扫码鼓励</div>
+      </div>
+    </div>
+  </div>
+</div><!-- 主界面 -->
+<div class="page" id="page-main">
+  <div class="nav"><div class="nav-back" onclick="go('page-cover')">←</div><h2>选择游戏</h2></div>
+  <div class="grid">
+    <div class="card" onclick="openGame('王者荣耀')"><div class="icon">👑</div><h3>王者荣耀</h3><p>积分夺宝</p></div>
+    <div class="card" onclick="openGame('原神')"><div class="icon">⚔️</div><h3>原神</h3><p>角色/武器</p></div>
+    <div class="card" onclick="openGame('崩坏星穹铁道')"><div class="icon">🚂</div><h3>崩坏星铁</h3><p>角色/光锥</p></div>
+    <div class="card" onclick="openGame('三角洲行动')"><div class="icon">🎯</div><h3>三角洲</h3><p>干员研究</p></div>
+    <div class="card" onclick="openGame('和平精英')"><div class="icon">🪖</div><h3>和平精英</h3><p>军需</p></div>
+    <div class="card" onclick="openGame('自定义')"><div class="icon">⚙️</div><h3>自定义</h3><p>自己填参数</p></div>
+  </div>
+  <div class="warn">⚠️ 数据仅供参考，以游戏内实际公示为准。<br>客服/BUG反馈：QQ 3693465571</div>
+</div>
+
+<!-- 卡池选择 -->
+<div class="page" id="page-pools">
+  <div class="nav"><div class="nav-back" onclick="go('page-main')">←</div><h2 id="pools-title">卡池</h2></div>
+  <div id="pools-list"></div>
+</div>
+
+<!-- 计算页 -->
+<div class="page" id="page-calc">
+  <div class="nav"><div class="nav-back" onclick="go('page-pools')">←</div><h2 id="calc-title">计算</h2></div>
+  <div class="info-card" id="calc-info"></div>
+  <div id="custom-inputs" style="display:none">
+    <div class="input-group"><label>小保底（抽）</label><input type="number" id="c-pity" value="90"></div>
+    <div class="input-group"><label>大保底（抽）</label><input type="number" id="c-bigpity" value="180"></div>
+    <div class="input-group"><label>基础概率（%）</label><input type="number" id="c-rate" value="0.6" step="0.01"></div>
+    <div class="input-group"><label>每抽消耗</label><input type="number" id="c-cost" value="160"></div>
+    <div class="input-group"><label>货币名称</label><input type="text" id="c-currency" value="金币"></div>
+    <div class="input-group"><label>1 元 = ? 货币</label><input type="number" id="c-ratio" value="10"></div>
+    <button class="btn small" onclick="applyCustom()">应用自定义参数</button>
+  </div>
+  <div class="input-group"><label>我的预算（元）</label><input type="number" id="budget" placeholder="例如 648" inputmode="numeric"></div>
+  <div class="input-group"><label>已垫抽数（抽）</label><input type="number" id="already" placeholder="例如 0" inputmode="numeric" value="0"></div>
+  <button class="btn small" onclick="simulate()">🎰 模拟抽卡</button>
+  <button class="btn small" onclick="calcPity()">📊 算保底要多少钱</button>
+  <div class="spinner" id="spinner" style="display:none"><div class="spinner-card" id="spinner-card">?</div></div>
+  <div id="calc-result"></div>
+  <div class="warn">⚠️ 数据仅供参考，实际以游戏内为准。</div>
+</div>
+
+<!-- 激活码弹窗 -->
+<div class="modal" id="auth-modal">
+  <div class="modal-box">
+    <h3>🔒 输入激活码</h3>
+    <p>请输入激活码进入工具</p>
+    <input type="text" id="auth-code" placeholder="激活码" autocomplete="off">
+    <div class="err" id="auth-err"></div>
+    <button class="btn small" onclick="verifyCode()">验 证</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span>客服/BUG反馈：<span class="qq">QQ 3693465571</span></span>
+  <span class="ver">v1.0</span>
+</div><script>
+/* 版权校验：删除版权注释将导致程序无法运行 */
+(function checkCopyright() {
+  const html = document.documentElement.outerHTML;
+  const keys = ['冷风抽卡预算计算器 v1.0','CC BY-NC-SA 4.0','lengfeng','3693465571'];
+  const ok = keys.every(k => html.includes(k));
+  if (!ok) {
+    document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#ff6b6b;font-size:18px">⚠️ 版权信息缺失，程序无法运行</div>';
+    throw new Error('Copyright violation');
+  }
+})();
+
+(function initParticles() {
+  const box = document.getElementById('particles');
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (8 + Math.random() * 12) + 's';
+    p.style.animationDelay = Math.random() * 10 + 's';
+    p.style.background = Math.random() > 0.5 ? '#ff4d8d' : '#a855f7';
+    box.appendChild(p);
+  }
+})();
+
+function go(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+const VALID_CODES = ['lengfeng666', 'lengfeng888'];
+function openAuth() {
+  document.getElementById('auth-modal').classList.add('active');
+  document.getElementById('auth-code').focus();
+}
+function verifyCode() {
+  const code = document.getElementById('auth-code').value.trim();
+  const err = document.getElementById('auth-err');
+  if (VALID_CODES.includes(code)) {
+    localStorage.setItem('lf_auth', '1');
+    document.getElementById('auth-modal').classList.remove('active');
+    err.textContent = '';
+    go('page-main');
+  } else {
+    err.textContent = '激活码错误，请重新输入';
+    document.getElementById('auth-code').value = '';
+  }
+}
+
+const GAMES = {
+  '王者荣耀': { '积分夺宝（荣耀水晶）': { pity:361, bigPity:361, rate:0.008, costPerPull:60, currency:'荣耀积分', rateMoney:10, note:'基础概率0.8%，361保底' } },
+  '原神': {
+    '角色活动祈愿': { pity:90, bigPity:180, rate:0.006, costPerPull:160, currency:'原石', rateMoney:10, note:'基础0.6%，90小保底，180大保底' },
+    '武器活动祈愿': { pity:80, bigPity:160, rate:0.007, costPerPull:160, currency:'原石', rateMoney:10, note:'基础0.7%，80小保底，160大保底' }
+  },
+  '崩坏星穹铁道': {
+    '角色活动跃迁': { pity:90, bigPity:180, rate:0.006, costPerPull:160, currency:'星琼', rateMoney:10, note:'基础0.6%，90小保底，180大保底' },
+    '光锥活动跃迁': { pity:80, bigPity:160, rate:0.008, costPerPull:160, currency:'星琼', rateMoney:10, note:'基础0.8%，80小保底，160大保底' }
+  },
+  '三角洲行动': {
+    '干员研究': { pity:8, bigPity:8, rate:0, costPerPull:0, currency:'三角券', rateMoney:10, isIncremental:true, increments:[100,300,500,1000,1500,2000,2500,3000], note:'递增消耗，8抽大保底，累计11000券' }
+  },
+  '和平精英': {
+    '军需': { pity:100, bigPity:100, rate:0.013, costPerPull:10, currency:'军需币', rateMoney:10, note:'粉色约1.3%，无固定保底' }
+  },
+  '自定义': {
+    '自定义卡池': { pity:90, bigPity:180, rate:0.006, costPerPull:160, currency:'金币', rateMoney:10, note:'自己填参数' }
+  }
+};
+
+let currentGame='', currentPool='', currentPoolData=null, isCustom=false;
+
+function openGame(game) {
+  currentGame = game;
+  document.getElementById('pools-title').textContent = game;
+  const list = document.getElementById('pools-list');
+  list.innerHTML = '';
+  for (const poolName in GAMES[game]) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<h3>${poolName}</h3><p>${GAMES[game][poolName].note}</p>`;
+    card.onclick = () => openPool(game, poolName);
+    list.appendChild(card);
+  }
+  go('page-pools');
+}
+
+function openPool(game, pool) {
+  currentPool = pool;
+  currentPoolData = JSON.parse(JSON.stringify(GAMES[game][pool]));
+  isCustom = (game === '自定义');
+  document.getElementById('calc-title').textContent = game + ' · ' + pool;
+  document.getElementById('custom-inputs').style.display = isCustom ? 'block' : 'none';
+  if (isCustom) {
+    document.getElementById('c-pity').value = currentPoolData.pity;
+    document.getElementById('c-bigpity').value = currentPoolData.bigPity;
+    document.getElementById('c-rate').value = (currentPoolData.rate*100).toFixed(2);
+    document.getElementById('c-cost').value = currentPoolData.costPerPull;
+    document.getElementById('c-currency').value = currentPoolData.currency;
+    document.getElementById('c-ratio').value = currentPoolData.rateMoney;
+  }
+  renderInfo();
+  document.getElementById('budget').value = '';
+  document.getElementById('already').value = '0';
+  document.getElementById('calc-result').innerHTML = '';
+  document.getElementById('spinner').style.display = 'none';
+  go('page-calc');
+}
+
+function applyCustom() {
+  currentPoolData.pity = parseInt(document.getElementById('c-pity').value) || 90;
+  currentPoolData.bigPity = parseInt(document.getElementById('c-bigpity').value) || 180;
+  currentPoolData.rate = (parseFloat(document.getElementById('c-rate').value) || 0.6) / 100;
+  currentPoolData.costPerPull = parseInt(document.getElementById('c-cost').value) || 160;
+  currentPoolData.currency = document.getElementById('c-currency').value || '金币';
+  currentPoolData.rateMoney = parseInt(document.getElementById('c-ratio').value) || 10;
+  renderInfo();
+}
+
+function renderInfo() {
+  const d = currentPoolData;
+  document.getElementById('calc-info').innerHTML = `
+    <div class="row"><span class="k">小保底</span><span class="v">${d.pity} 抽</span></div>
+    <div class="row"><span class="k">大保底</span><span class="v">${d.bigPity} 抽</span></div>
+    <div class="row"><span class="k">基础概率</span><span class="v">${(d.rate*100).toFixed(2)}%</span></div>
+    <div class="row"><span class="k">每抽消耗</span><span class="v">${d.isIncremental?'递增':d.costPerPull+' '+d.currency}</span></div>
+    <div class="row"><span class="k">充值比例</span><span class="v">1 元 = ${d.rateMoney} ${d.currency}</span></div>
+  `;
+}
+
+function pullsFromMoney(money, d, already) {
+  if (d.isIncremental) {
+    let spent = 0, pulls = 0;
+    for (let i = already; i < d.increments.length; i++) {
+      spent += d.increments[i];
+      if (spent <= money * d.rateMoney) pulls++; else break;
+    }
+    return pulls;
+  }
+  return Math.floor(money * d.rateMoney / d.costPerPull);
+}
+
+function calcTotalCost(d, pulls) {
+  let cost = 0;
+  if (d.isIncremental) { for (let i = 0; i < pulls; i++) cost += d.increments[i] || 0; }
+  else cost = pulls * d.costPerPull;
+  return Math.ceil(cost / d.rateMoney);
+}
+
+function simulate() {
+  const d = currentPoolData;
+  const budget = parseFloat(document.getElementById('budget').value) || 0;
+  const already = parseInt(document.getElementById('already').value) || 0;
+  const box = document.getElementById('calc-result');
+  if (budget <= 0) { box.innerHTML = '<div class="result"><div class="line lose">请输入预算</div></div>'; return; }
+
+  const maxPulls = pullsFromMoney(budget, d, already);
+  const spinner = document.getElementById('spinner');
+  const card = document.getElementById('spinner-card');
+  spinner.style.display = 'flex';
+  card.className = 'spinner-card';
+  card.textContent = '?';
+
+  let pulls = 0, gotUP = false, gotGold = false, pityCounter = already;
+  const totalTry = Math.min(maxPulls, d.bigPity - already);
+  for (let i = 0; i < totalTry; i++) {
+    pulls++; pityCounter++;
+    let isGold = false;
+    if (pityCounter >= d.bigPity) { isGold = true; gotUP = true; }
+    else if (pityCounter >= d.pity) { isGold = true; }
+    else { isGold = Math.random() < d.rate; }
+    if (isGold) {
+      gotGold = true;
+      if (pityCounter >= d.pity || Math.random() < 0.5) { gotUP = true; break; }
+    }
+  }
+
+  card.classList.add('spin');
+  setTimeout(() => {
+    card.classList.remove('spin');
+    if (gotUP) { card.classList.add('gold'); card.textContent = '★'; }
+    else if (gotGold) { card.classList.add('purple'); card.textContent = '✦'; }
+    else card.textContent = '✕';
+  }, 300);
+
+  const spent = calcTotalCost(d, pulls);
+  const left = Math.max(0, d.bigPity - already - pulls);
+  setTimeout(() => {
+    let html = '<div class="result">';
+    html += `<div class="big ${gotUP?'win':'lose'}">${gotUP?'🎉 出了！':(gotGold?'✦ 出了五星但不是UP':'😢 没出')}</div>`;
+    html += `<div class="line">抽了 <b>${pulls}</b> 抽，花费约 <b>${spent}</b> 元</div>`;
+    html += `<div class="line">离大保底还差 <b>${left}</b> 抽</div>`;
+    html += `<div class="line">距离保底还需约 <b>${calcTotalCost(d,left)}</b> 元</div>`;
+    html += '</div>';
+    box.innerHTML = html;
+  }, 700);
+}
+
+function calcPity() {
+  const d = currentPoolData;
+  const already = parseInt(document.getElementById('already').value) || 0;
+  const box = document.getElementById('calc-result');
+  const smallLeft = Math.max(0, d.pity - already);
+  const bigLeft = Math.max(0, d.bigPity - already);
+  let html = '<div class="result"><div class="big">📊 保底计算</div>';
+  html += `<div class="line">小保底还需 <b>${smallLeft}</b> 抽，约 <b>${calcTotalCost(d,smallLeft)}</b> 元</div>`;
+  html += `<div class="line">大保底还需 <b>${bigLeft}</b> 抽，约 <b>${calcTotalCost(d,bigLeft)}</b> 元</div></div>`;
+  box.innerHTML = html;
+}
+</script>
+</body>
+</html>
